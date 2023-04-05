@@ -15,7 +15,15 @@ type PlayerDetail struct {
 }
 
 func main() {
-	fmt.Printf("Game dimenangkan oleh pemain #%d karena memiliki poin lebih banyak dari pemain lainnya.", gameInit(2, 3))
+	var player, dice int
+	
+	fmt.Print("masukkan jumlah pemain:")
+	fmt.Scanln(&player)
+
+	fmt.Print("masukkan jumlah dadu:")
+	fmt.Scanln(&dice)
+
+	fmt.Printf("Game dimenangkan oleh pemain #%d karena memiliki poin lebih banyak dari pemain lainnya.", gameInit(player, dice))
 }
 
 func gameInit(n, m int) int {
