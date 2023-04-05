@@ -10,28 +10,44 @@ type PlayerDetail struct {
 	ID            int
 	Point         int
 	DiceRemaining int
-	ResDice       []int
-	EvaluatedRes  []int
+	ResDice       [][]int
+	EvaluatedRes  [][]int
 }
 
 func main() {
 	var player, dice int
-	
+
 	fmt.Print("masukkan jumlah pemain:")
 	fmt.Scanln(&player)
 
 	fmt.Print("masukkan jumlah dadu:")
 	fmt.Scanln(&dice)
 
-	fmt.Printf("Game dimenangkan oleh pemain #%d karena memiliki poin lebih banyak dari pemain lainnya.", gameInit(player, dice))
+	winners := gameInit(player, dice)
+	
+	if len(winners) == 1 {
+		fmt.Printf("Game dimenangkan oleh pemain #%d karena memiliki poin lebih banyak dari pemain lainnya.", winners[0])
+	} else {
+		fmt.Print("Game berakhir dengan hasil imbang antara pemain ")
+		for i, winner := range winners {
+			fmt.Printf("#%d", winner)
+
+			if i == len(winners)-2 {
+				fmt.Print(" dan ")
+			} else if i < len(winners)-2 {
+				fmt.Print(", ")
+			}
+		}
+		fmt.Println(".")
+	}
 }
 
-func gameInit(n, m int) int {
+func gameInit(n, m int) []int {
 	fmt.Printf("Pemain = %d, Dadu = %d\n", n, m)
 	fmt.Println("==================")
 
 	var players []*PlayerDetail
-	var max, win int
+	var max int
 
 	for i := 1; i <= n; i++ {
 		players = append(players, &PlayerDetail{
@@ -45,77 +61,73 @@ func gameInit(n, m int) int {
 	for {
 		fmt.Printf("Giliran %d lempar dadu\n", round)
 
+		addDice := map[int]int{}
 		for _, player := range players {
-			player.ResDice = []int{}
-			for j := 0; j < player.DiceRemaining; j++ {
-				num := rand.Intn(6) + 1
-				player.ResDice = append(player.ResDice, num)
-			}
-
 			if player.DiceRemaining > 0 {
-				fmt.Printf("\tPemain #%d (%d): %s\n", player.ID, player.Point, strings.Trim(strings.Replace(fmt.Sprint(player.ResDice), " ", ",", -1), "[]"))
+				player.ResDice = append(player.ResDice, []int{}) 
+				player.EvaluatedRes =append(player.EvaluatedRes, []int{})
+				remainDice := player.DiceRemaining
+				for j := 0; j < remainDice; j++ {
+					num := rand.Intn(6) + 1
+					player.ResDice[round-1] = append(player.ResDice[round-1], num)
+
+					switch num {
+					case 6:
+						player.Point++
+						player.DiceRemaining--
+					case 1:
+						player.DiceRemaining--
+						if player.ID == len(players) {
+							addDice[1]++
+						} else {
+							addDice[player.ID+1]++
+						}
+					default:
+						player.EvaluatedRes[round-1] = append(player.EvaluatedRes[round-1], num)
+					}
+				}
+
+				fmt.Printf("\tPemain #%d (%d): %s\n", player.ID, player.Point, strings.Trim(strings.Replace(fmt.Sprint(player.ResDice[round-1]), " ", ",", -1), "[]"))
 			} else {
 				fmt.Printf("\tPemain #%d (%d): _ (Berhenti bermain karena tidak memiliki dadu)\n", player.ID, player.Point)
 			}
 		}
 
 		fmt.Println("Setelah evaluasi:")
-		addDice := map[int]int{}
+		playersRemain := []int{}
 		for _, player := range players {
-			player.EvaluatedRes = []int{}
-			for _, dice := range player.ResDice {
-				switch dice {
-				case 6:
-					player.Point++
-					player.DiceRemaining--
-				case 1:
-					player.DiceRemaining--
-					if player.ID == len(players) {
-						addDice[1]++					
-					} else {
-						addDice[player.ID+1]++
-					}
-				default:
-					player.EvaluatedRes = append(player.EvaluatedRes, dice)
-				}
-			}
-		}
-
-		for _, player := range players {
-			for i:=0; i<addDice[player.ID]; i++ {
+			for i := 0; i < addDice[player.ID]; i++ {
 				player.DiceRemaining++
-				player.EvaluatedRes = append(player.EvaluatedRes, 1)
+				player.EvaluatedRes[round-1] = append(player.EvaluatedRes[round-1], 1)
+			}
+
+			if player.Point > max {
+				max = player.Point
 			}
 
 			if player.DiceRemaining > 0 {
-				fmt.Printf("\tPemain #%d (%d): %s\n", player.ID, player.Point, strings.Trim(strings.Replace(fmt.Sprint(player.EvaluatedRes), " ", ",", -1), "[]"))
+				fmt.Printf("\tPemain #%d (%d): %s\n", player.ID, player.Point, strings.Trim(strings.Replace(fmt.Sprint(player.EvaluatedRes[round-1]), " ", ",", -1), "[]"))
+
+				playersRemain = append(playersRemain, player.ID)
 			} else {
 				fmt.Printf("\tPemain #%d (%d): _ (Berhenti bermain karena tidak memiliki dadu)\n", player.ID, player.Point)
 			}
 		}
 		fmt.Println("==================")
-
-		playersRemain := []int{}
-		for _, player := range players {
-			if player.DiceRemaining > 0 {
-				playersRemain = append(playersRemain, player.ID)
-				max = player.Point
-			}
-		}
 		if len(playersRemain) == 1 {
 			fmt.Printf("Game berakhir karena hanya pemain #%d yang memiliki dadu.\n", playersRemain[0])
-			win = playersRemain[0]
 			break
 		}
 		round++
 	}
 
+
+	winners := []int{}
 	for _, player := range players {
-		if player.Point > max {
-			max = player.Point
-			win = player.ID
+		if player.Point == max {
+			winners = append(winners, player.ID)
 		}
 	}
 
-	return win
+	return winners
 }
