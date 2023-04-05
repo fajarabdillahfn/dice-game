@@ -31,6 +31,10 @@ func main() {
 		panic(err)
 	}
 
+	if player == 0 || dice == 0 {
+		panic("ERROR: pemain atau dadu harus 1 atau lebih")
+	}
+
 	// GAME START!!
 	winners := gameStart(player, dice)
 
