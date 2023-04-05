@@ -16,6 +16,7 @@ type PlayerDetail struct {
 }
 
 func main() {
+	// gather input data from user
 	var player, dice int
 
 	fmt.Print("masukkan jumlah pemain:")
@@ -30,8 +31,10 @@ func main() {
 		panic(err)
 	}
 
+	// GAME START!!
 	winners := gameStart(player, dice)
 
+	// check the winner(s)
 	if len(winners) == 1 {
 		fmt.Printf("Game dimenangkan oleh pemain #%d karena memiliki poin lebih banyak dari pemain lainnya.", winners[0])
 	} else {
